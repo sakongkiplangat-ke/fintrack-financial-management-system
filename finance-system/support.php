@@ -1,0 +1,7 @@
+<?php require 'config.php'; require_login(); $uid=$_SESSION['uid'];
+if ($_SERVER['REQUEST_METHOD']==='POST') { check_csrf(); $s=mb_substr(trim($_POST['subject'] ?? ''),0,120); $b=mb_substr(trim($_POST['body'] ?? ''),0,3000);
+  if ($s===''||$b==='') flash('Please fill in both fields.'); else { $pdo->prepare('INSERT INTO support(user_id,kind,subject,body) VALUES(?,?,?,?)')->execute([$uid,($_POST['kind'] ?? '')==='feedback'?'feedback':'ticket',$s,$b]); flash('Thank you. We received it.'); }
+  header('Location: support.php'); exit; }
+$st=$pdo->prepare('SELECT * FROM support WHERE user_id=? ORDER BY id DESC'); $st->execute([$uid]); page_head('Support'); ?><h1>Support &amp; feedback</h1>
+<form method="post" class="card narrow"><?= csrf() ?><label>Type<select name="kind"><option value="ticket">I need help</option><option value="feedback">I have feedback or an idea</option></select></label><label>Subject<input name="subject" required maxlength="120"></label><label>Message<textarea name="body" rows="5" required maxlength="3000"></textarea></label><button class="btn">Send</button></form>
+<h2>Your messages</h2><div class="card scroll"><table><tr><th>Date</th><th>Type</th><th>Subject</th><th>Status</th></tr><?php foreach ($st as $r) echo '<tr><td>'.e($r['at']).'</td><td>'.e($r['kind']).'</td><td>'.e($r['subject']).'</td><td>'.e($r['status']).'</td></tr>'; ?></table></div><?php page_foot();

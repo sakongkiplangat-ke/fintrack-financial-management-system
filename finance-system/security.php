@@ -1,0 +1,17 @@
+<?php require 'config.php'; require_login(); $uid=$_SESSION['uid']; $u=cur_u($pdo,$uid);
+if ($_SERVER['REQUEST_METHOD']==='POST') { check_csrf(); $a=$_POST['action'] ?? '';
+  if ($a==='start') { $_SESSION['new_totp']=b32enc(random_bytes(10)); }
+  elseif ($a==='confirm' && !empty($_SESSION['new_totp'])) { if (totp_ok($_SESSION['new_totp'],$_POST['code'] ?? '')) { $pdo->prepare('UPDATE users SET totp_secret=? WHERE id=?')->execute([$_SESSION['new_totp'],$uid]); unset($_SESSION['new_totp']); audit($pdo,$uid,'2fa_on'); flash('Two-factor authentication is on.'); } else flash('That code did not match. Try again.'); }
+  elseif ($a==='disable') { $h=$pdo->prepare('SELECT password_hash FROM users WHERE id=?'); $h->execute([$uid]); if (password_verify($_POST['password'] ?? '',$h->fetchColumn())) { $pdo->prepare('UPDATE users SET totp_secret=NULL WHERE id=?')->execute([$uid]); audit($pdo,$uid,'2fa_off'); flash('Two-factor authentication is off.'); } else flash('Wrong password.'); }
+  header('Location: security.php'); exit; }
+$ll=$pdo->prepare('SELECT * FROM login_log WHERE user_id=? ORDER BY id DESC LIMIT 10'); $ll->execute([$uid]); $au=$pdo->prepare('SELECT * FROM audit_log WHERE user_id=? ORDER BY id DESC LIMIT 15'); $au->execute([$uid]);
+page_head('Security'); ?><h1>Security</h1>
+<div class="card narrow"><h2 style="margin-top:0">Two-factor authentication</h2>
+<?php if ($u['totp_secret']): ?><p class="pos"><b>On.</b> You need a code from your authenticator app each time you log in.</p>
+<form method="post" data-confirm="Turn off two-factor authentication?"><?= csrf() ?><input type="hidden" name="action" value="disable"><label>Password<input type="password" name="password" required></label><button class="btn alt">Turn off</button></form>
+<?php elseif (!empty($_SESSION['new_totp'])): $sec=$_SESSION['new_totp']; ?><p>In Google Authenticator or Authy choose <b>Enter a setup key</b> and type:</p><p style="font-size:1.3rem;letter-spacing:2px;word-break:break-all"><b><?= e(implode(' ',str_split($sec,4))) ?></b></p><p class="note">Account: FinTrack, type: time based.</p>
+<form method="post"><?= csrf() ?><input type="hidden" name="action" value="confirm"><label>Then enter the 6-digit code it shows<input name="code" inputmode="numeric" maxlength="6" required></label><button class="btn">Turn on</button></form>
+<?php else: ?><p>Add a second step to your login with an authenticator app.</p><form method="post"><?= csrf() ?><input type="hidden" name="action" value="start"><button class="btn">Set up</button></form><?php endif; ?></div>
+<h2>Recent logins</h2><div class="card scroll"><table><tr><th>When</th><th>Result</th><th>IP address</th><th>Device</th></tr><?php foreach ($ll as $r) echo '<tr><td>'.e($r['at']).'</td><td>'.($r['ok']?'<span class="pos">Success</span>':'<span class="neg">Failed</span>').'</td><td>'.e($r['ip']).'</td><td>'.e(substr($r['ua'],0,60)).'</td></tr>'; ?></table></div>
+<h2>Activity log</h2><div class="card scroll"><table><tr><th>When</th><th>Action</th><th>Detail</th></tr><?php foreach ($au as $r) echo '<tr><td>'.e($r['at']).'</td><td>'.e($r['action']).'</td><td>'.e($r['detail']).'</td></tr>'; ?></table></div>
+<p class="note">Protections in place: hashed passwords, strong-password rules, login rate limiting, session timeout after 30 minutes idle, CSRF tokens, prepared SQL statements, input validation, encrypted transaction notes, login alerts for new locations, and single-use password reset links.</p><?php page_foot();
