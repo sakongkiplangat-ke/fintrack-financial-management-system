@@ -28,3 +28,89 @@ textarea{display:block;width:100%;padding:9px;margin-top:4px;border:1px solid #c
 .alert.warn{background:#fef3c7;color:#92400e}.alert.info{background:#e0f2fe;color:#075985}
 .chat{max-height:420px;overflow-y:auto}.msg{padding:8px 12px;border-radius:8px;margin:6px 0;white-space:pre-wrap}.msg.me{background:#e0f2fe}.msg.ai{background:#f1f5f9}
 .pill{display:inline-block;padding:2px 10px;border-radius:99px;background:var(--line);font-size:.8rem}
+
+
+
+/* ===== FinTrack Mobile Interface ===== */
+
+@media screen and (max-width: 600px) {
+  body {
+    font-size: 15px;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 100%;
+    padding: 12px;
+  }
+
+  .nav {
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .nav a {
+    margin-left: 0;
+    font-size: 14px;
+  }
+
+  .brand {
+    width: 100%;
+    font-size: 1.25rem;
+    margin-bottom: 5px !important;
+  }
+
+  .grid,
+  .two {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .card {
+    min-width: 0;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+
+  .stat b {
+    font-size: 1.25rem;
+    overflow-wrap: anywhere;
+  }
+
+  .btn,
+  button {
+    min-height: 42px;
+    max-width: 100%;
+  }
+
+  .act {
+    flex-wrap: wrap;
+  }
+
+  .scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .scroll table {
+    min-width: 600px;
+  }
+
+  input,
+  select,
+  textarea {
+    max-width: 100%;
+    font-size: 16px;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+  }
+
+  h2 {
+    font-size: 1.3rem;
+  }
+}
+
